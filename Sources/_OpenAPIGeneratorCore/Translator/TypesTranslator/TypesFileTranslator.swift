@@ -43,22 +43,43 @@ struct TypesFileTranslator: FileTranslator {
 
     let components = try translateComponents(doc.components)
 
-    var i = 0
-    return structCodeBlocks(block: components).map { block in
+    func blocks() -> [StructuredSwiftRepresentation] {
+      var i = 0
+      return structCodeBlocks(block: components).map { block in
+        let typesFile = FileDescription(
+          topComment: topComment,
+          imports: imports,
+          codeBlocks: [block.block]
+        )
+
+        i =  i + 1
+        return StructuredSwiftRepresentation(
+          file: .init(
+            name: block.name + ".swift",
+            contents: typesFile
+          )
+        )
+      }
+    }
+
+    if let namespace = config.namespace {
+      // we should make a top level file for this name space
       let typesFile = FileDescription(
+        isNamespace: true,
         topComment: topComment,
-        imports: imports,
-        codeBlocks: [block.block]
+        imports: [],
+        codeBlocks: [CodeBlock(item: CodeBlockItem.declaration(.enum(.init(accessModifier: .public, name: namespace))))]
       )
 
-      i =  i + 1
-      return StructuredSwiftRepresentation(
+      return [StructuredSwiftRepresentation(
         file: .init(
-          name: block.name + ".swift",
+          name: namespace + ".swift",
           contents: typesFile
         )
-      )
+      )] + blocks()
     }
+
+    return blocks()
   }
 }
 

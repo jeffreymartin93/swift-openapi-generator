@@ -718,8 +718,8 @@ struct TextBasedRenderer: RendererProtocol {
             lines.appendLines(from: renderedImports(imports))
         }
 
-    if let namespace = config.namespace {
-      lines.appendLines(from: "struct \(namespace) {")
+    if let namespace = config.namespace, !description.isNamespace {
+      lines.appendLines(from: "public extension \(namespace) {")
     }
 
         let renderedCodeBlocks = description.codeBlocks.map(renderedCodeBlock)
@@ -728,7 +728,7 @@ struct TextBasedRenderer: RendererProtocol {
             lines.append("")
         }
 
-    if let namespace = config.namespace {
+    if let namespace = config.namespace, !description.isNamespace {
       lines.appendLines(from: "}")
     }
         return lines.joinedLines()

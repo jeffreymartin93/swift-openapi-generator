@@ -953,6 +953,8 @@ struct CodeBlock: Equatable, Codable {
 /// A description of a Swift file.
 struct FileDescription: Equatable, Codable {
 
+    var isNamespace: Bool
+
     /// A comment placed at the top of the file.
     var topComment: Comment?
 
@@ -962,6 +964,13 @@ struct FileDescription: Equatable, Codable {
 
     /// The code blocks that represent the main contents of the file.
     var codeBlocks: [CodeBlock]
+
+  init(isNamespace: Bool = false, topComment: Comment? = nil, imports: [ImportDescription]? = nil, codeBlocks: [CodeBlock]) {
+    self.isNamespace = isNamespace
+    self.topComment = topComment
+    self.imports = imports
+    self.codeBlocks = codeBlocks
+  }
 }
 
 /// A description of a named Swift file.
