@@ -719,7 +719,7 @@ struct TextBasedRenderer: RendererProtocol {
         }
 
     if let namespace = config.namespace, !description.isNamespace {
-      lines.appendLines(from: "public extension \(namespace) {")
+      lines.appendLines(from: "extension \(namespace) {")
     }
 
         let renderedCodeBlocks = description.codeBlocks.map(renderedCodeBlock)

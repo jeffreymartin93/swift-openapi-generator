@@ -105,11 +105,14 @@ func codeBlocks(decleration: Declaration) -> [Code] {
     blocks.append(Code(name: d.name, block: CodeBlock(item: CodeBlockItem.declaration(decleration))))
   case .enum(let e):
     if e.members.contains(where: {
-      guard case let .enum(_) = $0 else {
-        return false
+      switch $0 {
+      case .enumCase:
+        return true
+      default:
+        break
       }
 
-      return true
+      return false
     }) {
       blocks.append(Code(name: e.name, block: CodeBlock(item: CodeBlockItem.declaration(decleration))))
     } else {

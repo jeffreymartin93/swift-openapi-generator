@@ -25,12 +25,7 @@ enum Constants {
 
         /// The descriptions of modules imported by every generated file.
         static let imports: [ImportDescription] = [
-            ImportDescription(moduleName: "OpenAPIRuntime", spi: "Generated"),
-            ImportDescription(
-                moduleName: "Foundation",
-                moduleTypes: ["struct Foundation.URL", "struct Foundation.Data", "struct Foundation.Date"],
-                preconcurrency: .onOS(["Linux"])
-            ),
+          ImportDescription(moduleName: "Foundation"),
         ]
     }
 

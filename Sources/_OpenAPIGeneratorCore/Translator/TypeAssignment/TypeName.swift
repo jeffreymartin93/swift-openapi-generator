@@ -76,7 +76,7 @@ struct TypeName: Hashable {
     ///
     /// For example: `Swift.Int`.
     var fullyQualifiedSwiftName: String {
-        swiftKeyPathComponents.joined(separator: ".")
+      swiftKeyPathComponents.last!
     }
 
     /// A string representation of the last path component of the Swift
