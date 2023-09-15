@@ -24,52 +24,87 @@ import OpenAPIKit
 /// Server.swift.
 struct TypesFileTranslator: FileTranslator {
 
-    var config: Config
-    var diagnostics: any DiagnosticCollector
-    var components: OpenAPI.Components
+  var config: Config
+  var diagnostics: any DiagnosticCollector
+  var components: OpenAPI.Components
 
-    func translateFile(
-        parsedOpenAPI: ParsedOpenAPIRepresentation
-    ) throws -> StructuredSwiftRepresentation {
+  func translateFile(
+    parsedOpenAPI: ParsedOpenAPIRepresentation
+  ) throws -> [StructuredSwiftRepresentation] {
 
-        let doc = parsedOpenAPI
+    let doc = parsedOpenAPI
 
-        let topComment: Comment = .inline(Constants.File.topComment)
+    let topComment: Comment = .inline(Constants.File.topComment)
 
-        let imports =
-            Constants.File.imports
-            + config.additionalImports
-            .map { ImportDescription(moduleName: $0) }
+    let imports =
+    Constants.File.imports
+    + config.additionalImports
+      .map { ImportDescription(moduleName: $0) }
 
-        let apiProtocol = try translateAPIProtocol(doc.paths)
+    let components = try translateComponents(doc.components)
 
-        let serversDecl = translateServers(doc.servers)
+    var i = 0
+    return structCodeBlocks(block: components).map { block in
+      let typesFile = FileDescription(
+        topComment: topComment,
+        imports: imports,
+        codeBlocks: [block.block]
+      )
 
-        let components = try translateComponents(doc.components)
-
-        let operationDescriptions = try OperationDescription.all(
-            from: doc.paths,
-            in: doc.components,
-            asSwiftSafeName: swiftSafeName
+      i =  i + 1
+      return StructuredSwiftRepresentation(
+        file: .init(
+          name: block.name + ".swift",
+          contents: typesFile
         )
-        let operations = try translateOperations(operationDescriptions)
-
-        let typesFile = FileDescription(
-            topComment: topComment,
-            imports: imports,
-            codeBlocks: [
-                .declaration(apiProtocol),
-                .declaration(serversDecl),
-                components,
-                operations,
-            ]
-        )
-
-        return StructuredSwiftRepresentation(
-            file: .init(
-                name: GeneratorMode.types.outputFileName,
-                contents: typesFile
-            )
-        )
+      )
     }
+  }
+}
+
+struct Code {
+  var name: String
+  var block: CodeBlock
+}
+
+func structCodeBlocks(block: CodeBlock) -> [Code] {
+  switch block.item {
+  case .declaration(let d):
+    return codeBlocks(decleration: d)
+  case .expression(let e):
+    return []
+  }
+}
+
+func codeBlocks(decleration: Declaration) -> [Code] {
+  var blocks: [Code] = []
+
+  switch decleration {
+  case .struct(let d):
+    blocks.append(Code(name: d.name, block: CodeBlock(item: CodeBlockItem.declaration(decleration))))
+  case .enum(let e):
+    if e.members.contains(where: {
+      guard case let .enum(_) = $0 else {
+        return false
+      }
+
+      return true
+    }) {
+      blocks.append(Code(name: e.name, block: CodeBlock(item: CodeBlockItem.declaration(decleration))))
+    } else {
+      e.members.forEach { enumDec in
+        blocks.append(contentsOf: codeBlocks(decleration: enumDec))
+      }
+    }
+  case .protocol(let p):
+    blocks.append(Code(name: p.name, block: CodeBlock(item: CodeBlockItem.declaration(decleration))))
+  case .commentable(_, let d):
+    blocks.append(contentsOf: codeBlocks(decleration: d))
+  case .deprecated(_, let d):
+    blocks.append(contentsOf: codeBlocks(decleration: d))
+  default:
+    break
+  }
+
+  return blocks
 }

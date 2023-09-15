@@ -20,7 +20,7 @@ struct MultiplexTranslator: TranslatorProtocol {
         parsedOpenAPI: ParsedOpenAPIRepresentation,
         config: Config,
         diagnostics: any DiagnosticCollector
-    ) throws -> StructuredSwiftRepresentation {
+    ) throws -> [StructuredSwiftRepresentation] {
         let translator: any FileTranslator
         switch config.mode {
         case .types:

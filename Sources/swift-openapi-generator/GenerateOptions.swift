@@ -37,6 +37,9 @@ struct _GenerateOptions: ParsableArguments {
     @Option(help: "Pre-release feature to enable. Options: \(FeatureFlag.prettyListing).")
     var featureFlag: [FeatureFlag] = []
 
+    @Option(help: "Namespace to wrap all code in")
+    var namespace: String?
+
     @Option(
         help: "When specified, writes out the diagnostics into a YAML file instead of emitting them to standard error."
     )
@@ -67,6 +70,14 @@ extension _GenerateOptions {
         }
         return Set(config.generate).sorted()
     }
+
+  func resolveNamespace(_ config: _UserConfig?) -> String? {
+    if let name = namespace {
+      return name
+    }
+
+    return nil
+  }
 
     /// Returns a list of additional imports requested by the user.
     /// - Parameter config: The configuration specified by the user.

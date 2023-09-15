@@ -42,5 +42,5 @@ protocol FileTranslator {
     /// - Returns: Structured representation of the generated Swift file.
     func translateFile(
         parsedOpenAPI: ParsedOpenAPIRepresentation
-    ) throws -> StructuredSwiftRepresentation
+    ) throws -> [StructuredSwiftRepresentation]
 }

@@ -24,44 +24,44 @@ import OpenAPIKit
 /// Depends on types defined in Types.swift.
 struct ClientFileTranslator: FileTranslator {
 
-    var config: Config
-    var diagnostics: any DiagnosticCollector
-    var components: OpenAPI.Components
+  var config: Config
+  var diagnostics: any DiagnosticCollector
+  var components: OpenAPI.Components
 
-    func translateFile(
-        parsedOpenAPI: ParsedOpenAPIRepresentation
-    ) throws -> StructuredSwiftRepresentation {
+  func translateFile(
+    parsedOpenAPI: ParsedOpenAPIRepresentation
+  ) throws -> [StructuredSwiftRepresentation] {
 
-        let doc = parsedOpenAPI
+    let doc = parsedOpenAPI
 
-        let topComment: Comment = .inline(Constants.File.topComment)
+    let topComment: Comment = .inline(Constants.File.topComment)
 
-        let imports =
-            Constants.File.imports
-            + config.additionalImports
-            .map { ImportDescription(moduleName: $0) }
+    let imports =
+    Constants.File.imports
+    + config.additionalImports
+      .map { ImportDescription(moduleName: $0) }
 
-        let clientMethodDecls =
-            try OperationDescription
-            .all(
-                from: doc.paths,
-                in: components,
-                asSwiftSafeName: swiftSafeName
-            )
-            .map(translateClientMethod(_:))
+    let clientMethodDecls =
+    try OperationDescription
+      .all(
+        from: doc.paths,
+        in: components,
+        asSwiftSafeName: swiftSafeName
+      )
+      .map(translateClientMethod(_:))
 
-        let clientStructPropertyDecl: Declaration = .commentable(
-            .doc("The underlying HTTP client."),
-            .variable(
-                accessModifier: .private,
-                kind: .let,
-                left: Constants.Client.Universal.propertyName,
-                type: Constants.Client.Universal.typeName
-            )
-        )
+    let clientStructPropertyDecl: Declaration = .commentable(
+      .doc("The underlying HTTP client."),
+      .variable(
+        accessModifier: .private,
+        kind: .let,
+        left: Constants.Client.Universal.propertyName,
+        type: Constants.Client.Universal.typeName
+      )
+    )
 
-        let clientStructInitDecl: Declaration = .commentable(
-            .doc(
+    let clientStructInitDecl: Declaration = .commentable(
+      .doc(
                 #"""
                 Creates a new client.
                 - Parameters:
@@ -72,98 +72,100 @@ struct ClientFileTranslator: FileTranslator {
                   - transport: A transport that performs HTTP operations.
                   - middlewares: A list of middlewares to call before the transport.
                 """#
-            ),
-            .function(
-                accessModifier: config.access,
-                kind: .initializer,
-                parameters: [
-                    .init(label: "serverURL", type: Constants.ServerURL.underlyingType),
-                    .init(
-                        label: "configuration",
-                        type: Constants.Configuration.typeName,
-                        defaultValue: .dot("init").call([])
-                    ),
-                    .init(
-                        label: "transport",
-                        type: Constants.Client.Transport.typeName
-                    ),
-                    .init(
-                        label: "middlewares",
-                        type: "[\(Constants.Client.Middleware.typeName)]",
-                        defaultValue: .literal(.array([]))
-                    ),
-                ],
-                body: [
-                    .expression(
-                        .assignment(
-                            left: .identifier("self").dot(Constants.Client.Universal.propertyName),
-                            right: .dot("init")
-                                .call([
-                                    .init(
-                                        label: "serverURL",
-                                        expression: .identifier("serverURL")
-                                    ),
-                                    .init(
-                                        label: "configuration",
-                                        expression: .identifier("configuration")
-                                    ),
-                                    .init(
-                                        label: "transport",
-                                        expression: .identifier("transport")
-                                    ),
-                                    .init(
-                                        label: "middlewares",
-                                        expression: .identifier("middlewares")
-                                    ),
-                                ])
-                        )
-                    )
-                ]
+      ),
+      .function(
+        accessModifier: config.access,
+        kind: .initializer,
+        parameters: [
+          .init(label: "serverURL", type: Constants.ServerURL.underlyingType),
+          .init(
+            label: "configuration",
+            type: Constants.Configuration.typeName,
+            defaultValue: .dot("init").call([])
+          ),
+          .init(
+            label: "transport",
+            type: Constants.Client.Transport.typeName
+          ),
+          .init(
+            label: "middlewares",
+            type: "[\(Constants.Client.Middleware.typeName)]",
+            defaultValue: .literal(.array([]))
+          ),
+        ],
+        body: [
+          .expression(
+            .assignment(
+              left: .identifier("self").dot(Constants.Client.Universal.propertyName),
+              right: .dot("init")
+                .call([
+                  .init(
+                    label: "serverURL",
+                    expression: .identifier("serverURL")
+                  ),
+                  .init(
+                    label: "configuration",
+                    expression: .identifier("configuration")
+                  ),
+                  .init(
+                    label: "transport",
+                    expression: .identifier("transport")
+                  ),
+                  .init(
+                    label: "middlewares",
+                    expression: .identifier("middlewares")
+                  ),
+                ])
             )
-        )
+          )
+        ]
+      )
+    )
 
-        let clientStructConverterPropertyDecl: Declaration = .variable(
-            accessModifier: .private,
-            kind: .var,
-            left: "converter",
-            type: Constants.Converter.typeName,
-            body: [
-                .expression(
-                    .identifier(Constants.Client.Universal.propertyName)
-                        .dot("converter")
-                )
+    let clientStructConverterPropertyDecl: Declaration = .variable(
+      accessModifier: .private,
+      kind: .var,
+      left: "converter",
+      type: Constants.Converter.typeName,
+      body: [
+        .expression(
+          .identifier(Constants.Client.Universal.propertyName)
+          .dot("converter")
+        )
+      ]
+    )
+
+    let clientStructDecl: Declaration = .commentable(
+      parsedOpenAPI.info.description.flatMap { .doc($0) },
+      .struct(
+        .init(
+          accessModifier: config.access,
+          name: Constants.Client.typeName,
+          conformances: [
+            Constants.APIProtocol.typeName
+          ],
+          members: [
+            clientStructPropertyDecl,
+            clientStructInitDecl,
+            clientStructConverterPropertyDecl,
+          ] + clientMethodDecls
+        )
+      )
+    )
+
+    return [
+      StructuredSwiftRepresentation(
+        file: .init(
+          name: GeneratorMode.client.outputFileName,
+          contents: .init(
+            topComment: topComment,
+            imports: imports,
+            codeBlocks: [
+              .declaration(clientStructDecl)
             ]
+          )
         )
-
-        let clientStructDecl: Declaration = .commentable(
-            parsedOpenAPI.info.description.flatMap { .doc($0) },
-            .struct(
-                .init(
-                    accessModifier: config.access,
-                    name: Constants.Client.typeName,
-                    conformances: [
-                        Constants.APIProtocol.typeName
-                    ],
-                    members: [
-                        clientStructPropertyDecl,
-                        clientStructInitDecl,
-                        clientStructConverterPropertyDecl,
-                    ] + clientMethodDecls
-                )
-            )
-        )
-
-        return StructuredSwiftRepresentation(
-            file: .init(
-                name: GeneratorMode.client.outputFileName,
-                contents: .init(
-                    topComment: topComment,
-                    imports: imports,
-                    codeBlocks: [
-                        .declaration(clientStructDecl)
-                    ]
-                )
-            )
-        )
-    }
+      )
+    ]
+  }
 }

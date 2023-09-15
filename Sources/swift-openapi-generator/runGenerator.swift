@@ -90,19 +90,20 @@ extension _Tool {
         isDryRun: Bool,
         diagnostics: any DiagnosticCollector
     ) throws {
+      let output = try _OpenAPIGeneratorCore.runGenerator(
+          input: .init(absolutePath: doc, contents: docData),
+          config: config,
+          diagnostics: diagnostics
+      )
+
+      try output.forEach { file in
         try replaceFileContents(
-            inDirectory: outputDirectory,
-            fileName: outputFileName,
-            with: {
-                let output = try _OpenAPIGeneratorCore.runGenerator(
-                    input: .init(absolutePath: doc, contents: docData),
-                    config: config,
-                    diagnostics: diagnostics
-                )
-                return output.contents
-            },
-            isDryRun: isDryRun
+          inDirectory: outputDirectory,
+          fileName: file.baseName,
+          with: { file.contents },
+          isDryRun: isDryRun
         )
+      }
     }
 
     /// Evaluates a closure to generate file data and writes the data to disk

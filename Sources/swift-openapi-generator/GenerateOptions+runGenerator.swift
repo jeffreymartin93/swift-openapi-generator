@@ -34,11 +34,13 @@ extension _GenerateOptions {
         let sortedModes = try resolvedModes(config)
         let resolvedAdditionalImports = resolvedAdditionalImports(config)
         let resolvedFeatureFlags = resolvedFeatureFlags(config)
+        let namespace = resolveNamespace(config)
         let configs: [Config] = sortedModes.map {
             .init(
                 mode: $0,
                 additionalImports: resolvedAdditionalImports,
-                featureFlags: resolvedFeatureFlags
+                featureFlags: resolvedFeatureFlags,
+                namespace: namespace
             )
         }
         let diagnostics: any DiagnosticCollector

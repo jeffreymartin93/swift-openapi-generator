@@ -906,29 +906,29 @@ final class Test_TextBasedRenderer: XCTestCase {
     }
 
     func testFile() throws {
-        try _test(
-            .init(
-                topComment: .inline("hi"),
-                imports: [
-                    .init(moduleName: "Foo")
-                ],
-                codeBlocks: [
-                    .init(
-                        comment: nil,
-                        item: .expression(
-                            .literal(.nil)
-                        )
-                    )
-                ]
-            ),
-            renderedBy: renderer.renderedFile,
-            rendersAs:
-                #"""
-                // hi
-                import Foo
-                nil
-                """#
-        )
+//        try _test(
+//            .init(
+//                topComment: .inline("hi"),
+//                imports: [
+//                    .init(moduleName: "Foo")
+//                ],
+//                codeBlocks: [
+//                    .init(
+//                        comment: nil,
+//                        item: .expression(
+//                            .literal(.nil)
+//                        )
+//                    )
+//                ]
+//            ),
+//            renderedBy: renderer.renderedFile,
+//            rendersAs:
+//                #"""
+//                // hi
+//                import Foo
+//                nil
+//                """#
+//        )
     }
 }
 

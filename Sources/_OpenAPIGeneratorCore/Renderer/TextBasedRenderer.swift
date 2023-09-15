@@ -25,15 +25,15 @@ struct TextBasedRenderer: RendererProtocol {
         let namedFile = structured.file
         return InMemoryOutputFile(
             baseName: namedFile.name,
-            contents: renderFile(namedFile.contents)
+            contents: renderFile(namedFile.contents, config: config)
         )
     }
 
     // MARK: - Internals
 
     /// Renders the specified Swift file.
-    func renderFile(_ description: FileDescription) -> Data {
-        Data(renderedFile(description).utf8)
+  func renderFile(_ description: FileDescription, config: Config) -> Data {
+    Data(renderedFile(description, config: config).utf8)
     }
 
     /// Renders the specified comment.
@@ -484,9 +484,6 @@ struct TextBasedRenderer: RendererProtocol {
     /// Renders the specified enum declaration.
     func renderedEnum(_ enumDesc: EnumDescription) -> String {
         var words: [String] = []
-        if enumDesc.isFrozen {
-            words.append("@frozen")
-        }
         if let accessModifier = enumDesc.accessModifier {
             words.append(renderedAccessModifier(accessModifier))
         }
@@ -712,7 +709,7 @@ struct TextBasedRenderer: RendererProtocol {
     }
 
     /// Renders the specified file.
-    func renderedFile(_ description: FileDescription) -> String {
+  func renderedFile(_ description: FileDescription, config: Config) -> String {
         var lines: [String] = []
         if let topComment = description.topComment {
             lines.appendLines(from: renderedComment(topComment))
@@ -720,11 +717,20 @@ struct TextBasedRenderer: RendererProtocol {
         if let imports = description.imports {
             lines.appendLines(from: renderedImports(imports))
         }
+
+    if let namespace = config.namespace {
+      lines.appendLines(from: "struct \(namespace) {")
+    }
+
         let renderedCodeBlocks = description.codeBlocks.map(renderedCodeBlock)
         for block in renderedCodeBlocks {
             lines.append(block)
             lines.append("")
         }
+
+    if let namespace = config.namespace {
+      lines.appendLines(from: "}")
+    }
         return lines.joinedLines()
     }
 }

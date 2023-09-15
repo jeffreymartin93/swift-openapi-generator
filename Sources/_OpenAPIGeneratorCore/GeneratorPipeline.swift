@@ -45,10 +45,10 @@ struct GeneratorPipeline {
     typealias ParsedInput = ParsedOpenAPIRepresentation
 
     /// An output of the translation stage and an input of the rendering stage.
-    typealias TranslatedOutput = StructuredSwiftRepresentation
+    typealias TranslatedOutput = [StructuredSwiftRepresentation]
 
     /// An output of the rendering phase, usually written to disk.
-    typealias RenderedOutput = RenderedSwiftRepresentation
+    typealias RenderedOutput = [RenderedSwiftRepresentation]
 
     /// The parsing stage.
     var parseOpenAPIFileStage: GeneratorPipelineStage<RawInput, ParsedInput>
@@ -90,7 +90,7 @@ public func runGenerator(
     input: InMemoryInputFile,
     config: Config,
     diagnostics: any DiagnosticCollector
-) throws -> InMemoryOutputFile {
+) throws -> [InMemoryOutputFile] {
     try makeGeneratorPipeline(config: config, diagnostics: diagnostics).run(input)
 }
 
@@ -109,7 +109,10 @@ func makeGeneratorPipeline(
     validator: @escaping (ParsedOpenAPIRepresentation, Config) throws -> [Diagnostic] = validateDoc,
     translator: any TranslatorProtocol = MultiplexTranslator(),
     renderer: any RendererProtocol = TextBasedRenderer(),
-    formatter: @escaping (InMemoryOutputFile) throws -> InMemoryOutputFile = { try $0.swiftFormatted },
+    formatter: @escaping ([InMemoryOutputFile]) throws -> [InMemoryOutputFile] = { try $0.map({ file in
+      try file.swiftFormatted
+    })
+    },
     config: Config,
     diagnostics: any DiagnosticCollector
 ) -> GeneratorPipeline {
@@ -147,11 +150,13 @@ func makeGeneratorPipeline(
         renderSwiftFilesStage: .init(
             preTransitionHooks: [],
             transition: { input in
+              return try input.map {
                 try renderer.render(
-                    structured: input,
+                    structured: $0,
                     config: config,
                     diagnostics: diagnostics
                 )
+              }
             },
             postTransitionHooks: [
                 formatter

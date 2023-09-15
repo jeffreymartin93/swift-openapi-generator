@@ -96,10 +96,10 @@ class FileBasedReferenceTests: XCTestCase {
         // Write generated sources to temporary directory
         let generatedOutputDir = try self.temporaryDirectory()
         let generatedOutputFile = URL(
-            fileURLWithPath: generatedOutputSource.baseName,
+            fileURLWithPath: generatedOutputSource.first!.baseName,
             relativeTo: generatedOutputDir
         )
-        try generatedOutputSource.contents.write(to: generatedOutputFile)
+        try generatedOutputSource.first!.contents.write(to: generatedOutputFile)
 
         // Compare the generated directory with the reference directory
         let referenceOutputDir = URL(
@@ -108,7 +108,7 @@ class FileBasedReferenceTests: XCTestCase {
         )
         let referenceOutputFile =
             referenceOutputDir
-            .appendingPathComponent(generatedOutputSource.baseName)
+            .appendingPathComponent(generatedOutputSource.first!.baseName)
         self.assert(
             contentsOf: generatedOutputFile,
             equalsContentsOf: referenceOutputFile,
@@ -181,7 +181,7 @@ extension FileBasedReferenceTests {
             renderer: renderer,
             formatter: { file in
                 var newFile = file
-                newFile.contents = try newFile.contents.swiftFormatted
+                newFile[0].contents = try newFile.first!.contents.swiftFormatted
                 return newFile
             },
             config: config,

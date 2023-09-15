@@ -29,5 +29,5 @@ protocol TranslatorProtocol {
         parsedOpenAPI: ParsedOpenAPIRepresentation,
         config: Config,
         diagnostics: any DiagnosticCollector
-    ) throws -> StructuredSwiftRepresentation
+    ) throws -> [StructuredSwiftRepresentation]
 }

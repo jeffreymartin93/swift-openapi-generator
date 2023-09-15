@@ -28,7 +28,7 @@ struct ServerFileTranslator: FileTranslator {
 
     func translateFile(
         parsedOpenAPI: ParsedOpenAPIRepresentation
-    ) throws -> StructuredSwiftRepresentation {
+    ) throws -> [StructuredSwiftRepresentation] {
 
         let doc = parsedOpenAPI
 
@@ -69,19 +69,21 @@ struct ServerFileTranslator: FileTranslator {
             declarations: serverMethodDecls
         )
 
-        return StructuredSwiftRepresentation(
+        return [
+          StructuredSwiftRepresentation(
             file: .init(
-                name: GeneratorMode.server.outputFileName,
-                contents: .init(
-                    topComment: topComment,
-                    imports: imports,
-                    codeBlocks: [
-                        .declaration(protocolExtensionDecl),
-                        .declaration(serverExtensionDecl),
-                    ]
-                )
+              name: GeneratorMode.server.outputFileName,
+              contents: .init(
+                topComment: topComment,
+                imports: imports,
+                codeBlocks: [
+                  .declaration(protocolExtensionDecl),
+                  .declaration(serverExtensionDecl),
+                ]
+              )
             )
-        )
+          )
+        ]
     }
 
     /// Returns a declaration of the registerHandlers method and

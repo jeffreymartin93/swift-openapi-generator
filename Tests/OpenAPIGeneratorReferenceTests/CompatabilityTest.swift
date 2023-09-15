@@ -270,8 +270,8 @@ fileprivate extension CompatibilityTest {
 
             // Write the generated source files to the target source directory.
             for output in outputs {
-                let outputPath = targetSourceDirectory.appendingPathComponent(output.baseName, isDirectory: false)
-                XCTAssert(FileManager.default.createFile(atPath: outputPath.path, contents: output.contents))
+              let outputPath = targetSourceDirectory.appendingPathComponent(output.first!.baseName, isDirectory: false)
+              XCTAssert(FileManager.default.createFile(atPath: outputPath.path, contents: output.first!.contents))
             }
 
             // Build the package.
