@@ -43,7 +43,7 @@ struct TypesFileTranslator: FileTranslator {
 
     let components = try translateComponents(doc.components)
 
-    func blocks() -> [StructuredSwiftRepresentation] {
+    func blocks(leadingName: String) -> [StructuredSwiftRepresentation] {
       var i = 0
       return structCodeBlocks(block: components).map { block in
         let typesFile = FileDescription(
@@ -55,7 +55,7 @@ struct TypesFileTranslator: FileTranslator {
         i =  i + 1
         return StructuredSwiftRepresentation(
           file: .init(
-            name: block.name + ".swift",
+            name: leadingName + block.name + ".swift",
             contents: typesFile
           )
         )
@@ -76,10 +76,10 @@ struct TypesFileTranslator: FileTranslator {
           name: namespace + ".swift",
           contents: typesFile
         )
-      )] + blocks()
+      )] + blocks(leadingName: namespace + "_")
     }
 
-    return blocks()
+    return blocks(leadingName: "")
   }
 }
 
